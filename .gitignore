@@ -1,0 +1,16 @@
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+*.nupkg
+project.lock.json
+Thumbs.db
+Desktop.ini
+last-read.txt

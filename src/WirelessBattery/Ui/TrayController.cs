@@ -1,0 +1,127 @@
+using System.Drawing;
+using System.Windows.Forms;
+using WirelessBattery.Models;
+using WirelessBattery.Polling;
+using WirelessBattery.Providers;
+using Application = System.Windows.Application;
+
+namespace WirelessBattery.Ui;
+
+public sealed class TrayController : IDisposable
+{
+    private readonly BatteryPoller _poller;
+    private readonly MainWindow _window;
+    private readonly NotifyIcon _icon;
+    private readonly ToolStripMenuItem _startupItem;
+    private Icon? _currentIcon;
+    private bool _disposed;
+
+    public TrayController()
+    {
+        var tracker = new LowBatteryTracker();
+        _poller = new BatteryPoller(
+            [
+                new LaptopBatteryProvider(),
+                new LogitechHidppProvider(),
+                new BleBatteryProvider(),
+                new RogKeyboardProvider()
+            ],
+            tracker);
+
+        _window = new MainWindow
+        {
+            RefreshAsync = () => _poller.RefreshNowAsync()
+        };
+
+        _startupItem = new ToolStripMenuItem("开机启动")
+        {
+            CheckOnClick = true
+        };
+        var menu = new ContextMenuStrip();
+        var refresh = new ToolStripMenuItem("立即刷新");
+        refresh.Click += async (_, _) =>
+        {
+            try
+            {
+                await _poller.RefreshNowAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        };
+        _startupItem.Click += (_, _) => StartupRegistration.SetEnabled(_startupItem.Checked);
+        var exit = new ToolStripMenuItem("退出");
+        exit.Click += (_, _) => Exit();
+        menu.Opening += (_, _) => _startupItem.Checked = StartupRegistration.IsEnabled();
+        menu.Items.Add(refresh);
+        menu.Items.Add(_startupItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(exit);
+
+        _currentIcon = TrayIconPainter.Create(null);
+        _icon = new NotifyIcon
+        {
+            Icon = _currentIcon,
+            Text = "无线设备电量",
+            Visible = true,
+            ContextMenuStrip = menu
+        };
+        _icon.MouseUp += (_, e) =>
+        {
+            if (e.Button == MouseButtons.Left)
+                _window.Toggle();
+        };
+
+        _poller.Updated += (_, _) => Application.Current.Dispatcher.Invoke(ApplySnapshot);
+        _poller.Alerts += (_, alerts) => Application.Current.Dispatcher.Invoke(() => ShowAlert(alerts));
+    }
+
+    public void Start() => _poller.Start();
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+        _poller.Dispose();
+        _icon.Visible = false;
+        _icon.Dispose();
+        _currentIcon?.Dispose();
+        _window.CloseForExit();
+    }
+
+    private void ApplySnapshot()
+    {
+        var devices = _poller.Snapshot;
+        _window.Render(devices);
+        var lowest = devices.Where(device => device.CountsForTray).OrderBy(device => device.Percent).FirstOrDefault();
+        var tooltip = lowest?.Percent is int percent
+            ? TrimTooltip($"最低 {percent}% {lowest.Name}")
+            : "无线设备电量";
+        _icon.Text = tooltip;
+        var next = TrayIconPainter.Create(lowest?.Percent);
+        _icon.Icon = next;
+        _currentIcon?.Dispose();
+        _currentIcon = next;
+    }
+
+    private void ShowAlert(IReadOnlyList<LowBatteryAlert> alerts)
+    {
+        if (alerts.Count == 0)
+            return;
+
+        _icon.BalloonTipTitle = "电量偏低";
+        _icon.BalloonTipText = alerts.Count == 1
+            ? $"{alerts[0].DeviceName} 剩余 {alerts[0].Percent}%，已低于 {alerts[0].Threshold}%"
+            : string.Join("，", alerts.Select(alert => $"{alert.DeviceName} {alert.Percent}%"));
+        _icon.ShowBalloonTip(8000);
+    }
+
+    private void Exit()
+    {
+        Dispose();
+        Application.Current.Shutdown();
+    }
+
+    private static string TrimTooltip(string text) => text.Length <= 63 ? text : text[..63];
+}
