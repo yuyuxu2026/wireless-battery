@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _ageTimer;
     private IReadOnlyList<DeviceBattery> _devices = [];
     private bool _exit;
+    private bool _syncTray;
 
     public MainWindow()
     {
@@ -32,11 +33,15 @@ public partial class MainWindow : Window
         PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape)
-                Hide();
+                RequestHide();
         };
         PollSettings.Changed += OnPollSettingsChanged;
+        TrayDisplaySettings.Changed += OnTrayDisplaySettingsChanged;
         HighlightInterval();
+        SyncTrayDisplay();
     }
+
+    public Action? RequestExit { get; set; }
 
     public ObservableCollection<DeviceRow> Rows { get; } = new();
 
@@ -90,14 +95,22 @@ public partial class MainWindow : Window
         if (!_exit)
         {
             e.Cancel = true;
-            Topmost = false;
-            Hide();
+            RequestHide();
             return;
         }
 
         _ageTimer.Stop();
         PollSettings.Changed -= OnPollSettingsChanged;
+        TrayDisplaySettings.Changed -= OnTrayDisplaySettingsChanged;
         base.OnClosing(e);
+    }
+
+    private void RequestHide()
+    {
+        Topmost = false;
+        Hide();
+        if (!TrayDisplaySettings.ShowInTray)
+            RequestExit?.Invoke();
     }
 
     private void OnIntervalClick(object sender, RoutedEventArgs e)
@@ -120,7 +133,7 @@ public partial class MainWindow : Window
             button.BorderBrush = selected ? OkBrush : IdleBorderBrush;
         }
 
-        FootnoteText.Text = $"每 {PollSettings.Label(PollSettings.Minutes)}自动查询一次。立即刷新不受此限制。关闭窗口后仍在托盘运行。";
+        FootnoteText.Text = $"鼠标电量是任务栏箭头右侧的托盘图标，百分比画在图标里。每 {PollSettings.Label(PollSettings.Minutes)}自动查询一次，立即刷新不受此限制。";
     }
 
     private void Apply()
@@ -158,10 +171,23 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnHideClick(object sender, RoutedEventArgs e)
+    private void OnHideClick(object sender, RoutedEventArgs e) => RequestHide();
+
+    private void OnTrayDisplayChanged(object sender, RoutedEventArgs e)
     {
-        Topmost = false;
-        Hide();
+        if (_syncTray)
+            return;
+        TrayDisplaySettings.SetEnabled(TrayDisplayBox.IsChecked == true);
+    }
+
+    private void OnTrayDisplaySettingsChanged(object? sender, EventArgs e) => Dispatcher.Invoke(SyncTrayDisplay);
+
+    private void SyncTrayDisplay()
+    {
+        _syncTray = true;
+        TrayDisplayBox.IsChecked = TrayDisplaySettings.ShowInTray;
+        TrayHint.Visibility = TrayDisplaySettings.ShowInTray ? Visibility.Collapsed : Visibility.Visible;
+        _syncTray = false;
     }
 
     private void OnDrag(object sender, MouseButtonEventArgs e)

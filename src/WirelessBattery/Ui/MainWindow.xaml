@@ -110,6 +110,12 @@
                     <Button Content="30 分钟" Tag="30" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
                     <Button Content="60 分钟" Tag="60" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
                 </UniformGrid>
+                <CheckBox x:Name="TrayDisplayBox" Content="在托盘显示" Margin="3,12,0,0"
+                          Foreground="#3F3C37" FontSize="13"
+                          Checked="OnTrayDisplayChanged" Unchecked="OnTrayDisplayChanged"/>
+                <TextBlock x:Name="TrayHint" Text="关掉后图标会从任务栏消失，再关掉窗口就会退出。"
+                           Margin="22,4,0,0" Foreground="#8A8478" FontSize="12" TextWrapping="Wrap"
+                           Visibility="Collapsed"/>
             </StackPanel>
 
             <TextBlock x:Name="EmptyText" Grid.Row="3" Text="正在读取设备…" Margin="0,16,0,0"
