@@ -7,8 +7,6 @@ public sealed class LaptopBatteryProvider : IBatteryProvider
 {
     public string Id => "laptop";
 
-    public TimeSpan Interval => TimeSpan.FromSeconds(60);
-
     public Task<IReadOnlyList<DeviceBattery>> ReadAsync(CancellationToken cancellationToken) =>
         Task.Run(Read, cancellationToken);
 

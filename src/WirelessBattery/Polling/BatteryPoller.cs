@@ -106,7 +106,7 @@ public sealed class BatteryPoller : IDisposable
     private readonly Dictionary<string, IReadOnlyList<DeviceBattery>> _previous = new();
 
     private bool IsDue(IBatteryProvider provider, DateTimeOffset now) =>
-        !_lastRun.TryGetValue(provider.Id, out var last) || now - last >= provider.Interval;
+        !_lastRun.TryGetValue(provider.Id, out var last) || now - last >= PollSettings.Interval;
 
     private static async Task<IReadOnlyList<DeviceBattery>> ReadProviderAsync(
         IBatteryProvider provider,

@@ -15,8 +15,6 @@ public sealed class BleBatteryProvider : IBatteryProvider
 
     public string Id => "ble";
 
-    public TimeSpan Interval => TimeSpan.FromMinutes(3);
-
     public async Task<IReadOnlyList<DeviceBattery>> ReadAsync(CancellationToken cancellationToken)
     {
         var rows = new List<DeviceBattery>();

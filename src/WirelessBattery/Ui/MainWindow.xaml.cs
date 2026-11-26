@@ -2,8 +2,10 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using Media = System.Windows.Media;
+using WpfButton = System.Windows.Controls.Button;
 using System.Windows.Threading;
 using WirelessBattery.Models;
+using WirelessBattery.Polling;
 
 namespace WirelessBattery.Ui;
 
@@ -13,6 +15,8 @@ public partial class MainWindow : Window
     private static readonly Media.SolidColorBrush WarnBrush = Freeze(Media.Color.FromRgb(196, 123, 18));
     private static readonly Media.SolidColorBrush LowBrush = Freeze(Media.Color.FromRgb(194, 65, 45));
     private static readonly Media.SolidColorBrush MutedBrush = Freeze(Media.Color.FromRgb(138, 132, 120));
+    private static readonly Media.SolidColorBrush IdleTextBrush = Freeze(Media.Color.FromRgb(63, 60, 55));
+    private static readonly Media.SolidColorBrush IdleBorderBrush = Freeze(Media.Color.FromRgb(230, 226, 218));
 
     private readonly DispatcherTimer _ageTimer;
     private IReadOnlyList<DeviceBattery> _devices = [];
@@ -30,6 +34,8 @@ public partial class MainWindow : Window
             if (e.Key == Key.Escape)
                 Hide();
         };
+        PollSettings.Changed += OnPollSettingsChanged;
+        HighlightInterval();
     }
 
     public ObservableCollection<DeviceRow> Rows { get; } = new();
@@ -90,7 +96,31 @@ public partial class MainWindow : Window
         }
 
         _ageTimer.Stop();
+        PollSettings.Changed -= OnPollSettingsChanged;
         base.OnClosing(e);
+    }
+
+    private void OnIntervalClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is WpfButton { Tag: string text } && int.TryParse(text, out var minutes))
+            PollSettings.SetMinutes(minutes);
+    }
+
+    private void OnPollSettingsChanged(object? sender, EventArgs e) => Dispatcher.Invoke(HighlightInterval);
+
+    private void HighlightInterval()
+    {
+        foreach (var button in IntervalPanel.Children.OfType<WpfButton>())
+        {
+            var selected = button.Tag is string text
+                && int.TryParse(text, out var minutes)
+                && minutes == PollSettings.Minutes;
+            button.Background = selected ? OkBrush : Media.Brushes.White;
+            button.Foreground = selected ? Media.Brushes.White : IdleTextBrush;
+            button.BorderBrush = selected ? OkBrush : IdleBorderBrush;
+        }
+
+        FootnoteText.Text = $"每 {PollSettings.Label(PollSettings.Minutes)}自动查询一次。立即刷新不受此限制。关闭窗口后仍在托盘运行。";
     }
 
     private void Apply()

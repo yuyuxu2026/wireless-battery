@@ -15,8 +15,6 @@ public sealed class LogitechHidppProvider : IBatteryProvider
 
     public string Id => "logitech";
 
-    public TimeSpan Interval => TimeSpan.FromSeconds(60);
-
     public Task<IReadOnlyList<DeviceBattery>> ReadAsync(CancellationToken cancellationToken) =>
         Task.Run(() => Read(cancellationToken), cancellationToken);
 

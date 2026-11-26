@@ -7,8 +7,6 @@ public sealed class RogKeyboardProvider : IBatteryProvider
 {
     public string Id => "rog";
 
-    public TimeSpan Interval => TimeSpan.FromSeconds(60);
-
     public Task<IReadOnlyList<DeviceBattery>> ReadAsync(CancellationToken cancellationToken) =>
         Task.Run(Read, cancellationToken);
 

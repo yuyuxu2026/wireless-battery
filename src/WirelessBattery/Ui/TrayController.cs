@@ -13,6 +13,7 @@ public sealed class TrayController : IDisposable
     private readonly MainWindow _window;
     private readonly NotifyIcon _icon;
     private readonly ToolStripMenuItem _startupItem;
+    private readonly ToolStripMenuItem _intervalMenu;
     private Icon? _currentIcon;
     private bool _disposed;
 
@@ -50,10 +51,27 @@ public sealed class TrayController : IDisposable
             }
         };
         _startupItem.Click += (_, _) => StartupRegistration.SetEnabled(_startupItem.Checked);
+        _intervalMenu = new ToolStripMenuItem("查询间隔");
+        foreach (var minutes in PollSettings.Choices)
+        {
+            var chosen = minutes;
+            var item = new ToolStripMenuItem(PollSettings.Label(chosen))
+            {
+                Tag = chosen
+            };
+            item.Click += (_, _) => PollSettings.SetMinutes(chosen);
+            _intervalMenu.DropDownItems.Add(item);
+        }
         var exit = new ToolStripMenuItem("退出");
         exit.Click += (_, _) => Exit();
-        menu.Opening += (_, _) => _startupItem.Checked = StartupRegistration.IsEnabled();
+        menu.Opening += (_, _) =>
+        {
+            _startupItem.Checked = StartupRegistration.IsEnabled();
+            foreach (ToolStripMenuItem item in _intervalMenu.DropDownItems)
+                item.Checked = item.Tag is int minutes && minutes == PollSettings.Minutes;
+        };
         menu.Items.Add(refresh);
+        menu.Items.Add(_intervalMenu);
         menu.Items.Add(_startupItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(exit);

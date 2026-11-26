@@ -35,6 +35,29 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="IntervalButton" TargetType="Button">
+            <Setter Property="Margin" Value="3,0"/>
+            <Setter Property="Padding" Value="0,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#3F3C37"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E6E2DA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="QuietButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#6E6A62"/>
@@ -58,6 +81,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -77,10 +101,21 @@
             <Button x:Name="RefreshButton" Grid.Row="1" Content="立即刷新" HorizontalAlignment="Left"
                     Margin="0,14,0,0" Click="OnRefreshClick" Style="{StaticResource RefreshButton}"/>
 
-            <TextBlock x:Name="EmptyText" Grid.Row="2" Text="正在读取设备…" Margin="0,16,0,0"
+            <StackPanel Grid.Row="2" Margin="0,14,0,0">
+                <TextBlock Text="查询间隔" Foreground="#6E6A62" FontSize="13"/>
+                <UniformGrid x:Name="IntervalPanel" Columns="5" Margin="0,6,0,0">
+                    <Button Content="1 分钟" Tag="1" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
+                    <Button Content="10 分钟" Tag="10" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
+                    <Button Content="20 分钟" Tag="20" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
+                    <Button Content="30 分钟" Tag="30" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
+                    <Button Content="60 分钟" Tag="60" Click="OnIntervalClick" Style="{StaticResource IntervalButton}"/>
+                </UniformGrid>
+            </StackPanel>
+
+            <TextBlock x:Name="EmptyText" Grid.Row="3" Text="正在读取设备…" Margin="0,16,0,0"
                        Foreground="#6E6A62" Visibility="Collapsed"/>
 
-            <ScrollViewer Grid.Row="3" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto" MaxHeight="460">
+            <ScrollViewer Grid.Row="4" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto" MaxHeight="460">
                 <ItemsControl x:Name="DeviceList">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -106,8 +141,8 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <TextBlock Grid.Row="4" Text="鼠标和笔记本约 60 秒刷新一次，蓝牙约 3 分钟。关闭窗口后仍在托盘运行。"
-                       Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#8A8478" FontSize="12"/>
+            <TextBlock x:Name="FootnoteText" Grid.Row="5" TextWrapping="Wrap"
+                       Margin="0,8,0,0" Foreground="#8A8478" FontSize="12"/>
         </Grid>
     </Border>
 </Window>
