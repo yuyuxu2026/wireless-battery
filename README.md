@@ -28,14 +28,20 @@
 
 ## 运行
 
-需要 .NET 8 SDK。
+在这台电脑上改代码时需要 .NET 8 SDK。
 
 ```powershell
 dotnet run --project src/WirelessBattery
 ```
 
-发布一个可直接运行的程序：
+## 发给朋友
+
+朋友不需要安装 .NET。在这台电脑运行：
 
 ```powershell
-dotnet publish src/WirelessBattery -c Release
+.\publish.ps1
 ```
+
+会生成 `dist\WirelessBattery.exe`。把这一个文件发给朋友，双击就能打开。适用于 64 位 Windows 10（19041 及以上）和 Windows 11。
+
+如果 Windows 提示未知发布者，选择「仍要运行」。第一次打开会稍慢，因为程序要先把自己展开。连点两次不会开出两个窗口。
